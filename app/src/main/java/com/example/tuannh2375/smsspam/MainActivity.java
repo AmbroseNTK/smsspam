@@ -19,42 +19,48 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
     public static final String TAG = MainActivity.class.getSimpleName();
 
     public static final String mPath = "cc.txt";
-    private static final int MY_PERMISSIONS_REQUEST_SEND_SMS =0 ;
+    private static final int MY_PERMISSIONS_REQUEST_SEND_SMS = 0;
     private docfile file;
     private List<String> mLine;
     private StringBuilder text = new StringBuilder();
-  //  public int[] i ={0};
-    TextView txt1,txt2;
+    //  public int[] i ={0};
+    TextView txt1, txt2;
     Button btn1;
     String phoneNo;
     String message;
+    String[] phoneNumberList;
+    int count = 0;
+    Timer timer;
+    SmsManager smsManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate( savedInstanceState );
-        setContentView( R.layout.activity_main );
-        txt1 = (TextView) findViewById( R.id.concac );
-        txt2 = (TextView) findViewById( R.id.textView );
-        btn1 = (Button) findViewById( R.id.button );
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        txt1 = (TextView) findViewById(R.id.concac);
+        txt2 = (TextView) findViewById(R.id.textView);
+        btn1 = (Button) findViewById(R.id.button);
         BufferedReader reader = null;
 
         try {
             reader = new BufferedReader(
-                    new InputStreamReader( getAssets().open( "cc.txt" ) ) );
+                    new InputStreamReader(getAssets().open("cc.txt")));
 
             // do reading, usually loop until end of file reading
             String mLine;
             while ((mLine = reader.readLine()) != null) {
-                text.append( mLine );
-                text.append( '\n' );
+                text.append(mLine);
+                text.append('\n');
             }
         } catch (IOException e) {
-            Toast.makeText( getApplicationContext(), "Error reading file!", Toast.LENGTH_LONG ).show();
+            Toast.makeText(getApplicationContext(), "Error reading file!", Toast.LENGTH_LONG).show();
             e.printStackTrace();
         } finally {
             if (reader != null) {
@@ -66,22 +72,48 @@ public class MainActivity extends AppCompatActivity {
             }
 
             ArrayList<String> arrayList = new ArrayList<>();
-            arrayList.add( text.toString() );
-
-
-
-                    for (int i = 0; i < arrayList.size(); i++) {
-                        txt1.setText(arrayList.get( i ));
-                    }
-
-                }
-
-
-
-
+            arrayList.add(text.toString());
+            for (int i = 0; i < arrayList.size(); i++) {
+                txt1.setText(arrayList.get(i));
+                phoneNumberList = txt1.getText().toString().split("\n");
+            }
 
         }
+        timer = new Timer();
+        btn1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                smsManager = SmsManager.getDefault();
+
+                timer.scheduleAtFixedRate(new TimerTask() {
+                    @Override
+                    public void run() {
+                        if(count<phoneNumberList.length) {
+                            sendSMSMessage(phoneNumberList[count],"cc");
+                            count++;
+                        }
+                        else{
+
+                            timer.cancel();
+                        }
+                    }
+                },0,5000);
+            }
+        });
     }
+    protected void sendSMSMessage(String phoneNo, String message) {
+
+        try {
+
+            smsManager.sendTextMessage(phoneNo, null, message, null, null);
+            Toast.makeText(getApplicationContext(), "SMS sent.",
+                    Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+    }
+}
 
 
 
